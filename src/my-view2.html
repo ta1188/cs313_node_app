@@ -1,0 +1,83 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../app/bower_components/polymer/polymer-element.html">
+<link rel="import" href="../app/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../app/bower_components/iron-ajax/iron-request.html">
+<link rel="import" href="../app/bower_components/polymer/lib/mixins/gesture-event-listeners.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-view2">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+
+        padding: 10px;
+      }
+      .fetchBtn {
+        background-color: var(--app-primary-color);
+        color: white;
+      }
+      .responseDiv {
+        display: flex;
+        flex-wrap: wrap;
+      }
+    </style>
+    <iron-request id="xhr" response='{{response}}'></iron-request>
+
+    <div class="card">
+      <div class="circle">2</div>
+      <h1>Receipts</h1>
+      <paper-button class="fetchBtn" raised id="fetchBtn">Fetch Receipts</paper-button>
+      <div class='responseDiv' hidden="{{noData}}">
+        <h4>Your Receipts</h4>
+        {{response}}
+      </div>
+    </div>
+  </template>
+
+  <script>
+    class MyView2 extends Polymer.Element {
+      static get is() { return 'my-view2'; }
+      static get properties() {
+        return {
+          noData: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+            value: true
+          }
+        }
+      }
+      static get observers() {
+        return [
+            'resultsCheck(response)'
+        ]
+      }
+      constructor() {
+        super();
+        this.addEventListener('tap', 'fetchBtn');
+        Polymer.Gestures.addListener(this, 'tap', () => this.fetchLists());
+      }
+      fetchLists() {
+        console.log("here now");
+        this.$.xhr.send({url: 'https://mbl-checkout.herokuapp.com/fetchReceipts', body: 'params'});
+        this.noData = false;
+      }
+      resultsCheck(newValue) {
+        console.log('newValue: ', newValue);
+        // this.response = response;
+      }
+    }
+
+    window.customElements.define(MyView2.is, MyView2);
+  </script>
+</dom-module>
