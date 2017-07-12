@@ -1,0 +1,126 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../app/bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../app/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../app/bower_components/iron-ajax/iron-request.html">
+<link rel="import" href="../../app/bower_components/polymer/lib/mixins/gesture-event-listeners.html">
+<link rel="import" href="../../app/bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-lists">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+        background-color: #f5f5f5;
+        height: 100vh;
+      }
+      .itemCount {
+        font-style: italic;
+        margin-right: 0.5rem;
+      }
+      .card {
+        margin: 5px 0 !important;
+      }
+    </style>
+    <iron-request id="xhr" response='{{response}}'></iron-request>
+
+    <h1>Shopping Lists</h1>
+    <paper-button class="fetchBtn" raised id="fetchBtn" on-click='fetchLists'>Fetch Lists</paper-button>
+    <div class='responseDiv' hidden$="{{noData}}">
+      <h4>Your Lists</h4>
+    </div>
+    <template id="fd" is="dom-repeat" items="{{listArr}}" as="item">
+      <div class="listRow align shadow" on-click='test' id$=[[item.name]]>
+        <h3>[[item.name]]</h3>
+        <div class="align">
+          <h3 class="itemCount">[[item.count]]</h3><i>items</i>
+          <iron-icon icon="chevron-right"></iron-icon>
+        </div>
+      </div>
+    </template>
+  </template>
+
+  <script>
+    class MyLists extends Polymer.GestureEventListeners(Polymer.Element) {
+      static get is() { return 'my-lists'; }
+
+      static get properties() {
+        return {
+          noData: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+            value: true
+          },
+          listArr: {
+            type: Array,
+            notify: true,
+            reflectToAttribute: true,
+            value: []
+          },
+          listItemArr: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+          list: {
+            type: Object,
+            value: {},
+            notify: true
+          }
+        }
+      }
+      static get observers() {
+        return [ 'resultsCheck(response.*)' ]
+      }
+      fetchLists() {
+        console.log("here now");
+        this.$.xhr.send({url: 'https://mbl-checkout.herokuapp.com/fetchShopLists', body: 'params'});
+        this.noData = false;
+      }
+      resultsCheck(newValue) {
+        if (newValue.base) {
+          var obj = JSON.parse(newValue.base);
+          var listTitleKeys = Object.keys(obj); // Holds list keys (not really titles)
+          for (var i = 0; i < listTitleKeys.length; i++) {
+            var listItems = {};
+            this.push('listArr', {name: listTitleKeys[i], count: Object.keys(obj[listTitleKeys[i]].items).length});
+            listItems.name = listTitleKeys[i];
+            listItems.count = Object.keys(obj[listTitleKeys[i]].items).length;
+            listItems.items = [];
+            var count = 0;
+            for (var item in obj[listTitleKeys[i]].items) {
+              var label = obj[listTitleKeys[i]].items[item].item_label;
+              var qty = obj[listTitleKeys[i]].items[item].quantity;
+              var status = obj[listTitleKeys[i]].items[item].status;
+
+              listItems.items.push({'label': label, 'qty':qty, 'status':status, 'count':count});
+              count++;
+            }
+            this.listItemArr.push(listItems);
+          }
+          console.log('listItemArr: ', this.listItemArr);
+        }
+      }
+      test(e) {
+        var index = this.listItemArr.findIndex(x => x.name==e.target.id);
+        this.list = this.listItemArr[index];
+        console.log('index: ', index);
+        console.log(this.list);
+        this.set('route.path', 'list');
+      }
+    }
+
+    window.customElements.define(MyLists.is, MyLists);
+  </script>
+</dom-module>

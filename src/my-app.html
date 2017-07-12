@@ -23,16 +23,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../app/bower_components/paper-button/paper-button.html">
 <link rel="import" href="my-icons.html">
 
-<link rel="lazy-import" href="my-view1.html">
-<link rel="lazy-import" href="my-view2.html">
+<link rel="lazy-import" href="my-lists.html">
+<link rel="lazy-import" href="my-receipts.html">
 <link rel="lazy-import" href="my-view3.html">
 <link rel="lazy-import" href="my-view404.html">
+<link rel="lazy-import" href="my-list.html">
+<link rel="lazy-import" href="my-receipt.html">
 
 <dom-module id="my-app">
   <template>
     <style>
       :host {
-        --app-primary-color: #4285f4;
+        --app-primary-color: rgba(100,163,156,1);
         --app-secondary-color: black;
 
         display: block;
@@ -44,9 +46,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       app-header {
         color: #fff;
-        background-color: var(--app-primary-color);
+        background: rgba(109,173,167,1);
+        background: -moz-radial-gradient(center, ellipse cover, rgba(109,173,167,1) 0%, rgba(100,163,156,1) 0%, rgba(58,131,124,1) 77%, rgba(58,131,124,1) 100%);
+        background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, rgba(109,173,167,1)), color-stop(0%, rgba(100,163,156,1)), color-stop(77%, rgba(58,131,124,1)), color-stop(100%, rgba(58,131,124,1)));
+        background: -webkit-radial-gradient(center, ellipse cover, rgba(109,173,167,1) 0%, rgba(100,163,156,1) 0%, rgba(58,131,124,1) 77%, rgba(58,131,124,1) 100%);
+        background: -o-radial-gradient(center, ellipse cover, rgba(109,173,167,1) 0%, rgba(100,163,156,1) 0%, rgba(58,131,124,1) 77%, rgba(58,131,124,1) 100%);
+        background: -ms-radial-gradient(center, ellipse cover, rgba(109,173,167,1) 0%, rgba(100,163,156,1) 0%, rgba(58,131,124,1) 77%, rgba(58,131,124,1) 100%);
+        background: radial-gradient(ellipse at center, rgba(109,173,167,1) 0%, rgba(100,163,156,1) 0%, rgba(58,131,124,1) 77%, rgba(58,131,124,1) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#6dada7', endColorstr='#3a837c', GradientType=1 );
         width: 100%;
-        padding-left: 1rem;
+        /*padding-left: 1rem;*/
       }
 
       app-header paper-icon-button {
@@ -69,6 +78,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: black;
         font-weight: bold;
       }
+      .titleBar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      .title {
+        font-family: 'Titillium Web', sans-serif;
+        font-size: 18pt;
+        display: flex;
+        justify-content: center;
+        padding-right: 1rem;
+      }
+      @media screen and (min-width: 640px) {
+        .title {
+          padding-right: 0;
+          padding-left: 2rem;
+        }
+      }
     </style>
 
     <app-location route="{{route}}"></app-location>
@@ -83,8 +111,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-drawer id="drawer" slot="drawer">
         <app-toolbar>Menu</app-toolbar>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="view1" href="view1">Shopping Lists</a>
-          <a name="view2" href="view2">Receipts</a>
+          <a name="lists" href="lists">Shopping Lists</a>
+          <a name="receipts" href="receipts">Receipts</a>
           <a name="view3" href="view3">View Three</a>
         </iron-selector>
       </app-drawer>
@@ -92,10 +120,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Main content -->
       <app-header-layout has-scrolling-region>
 
-        <app-header slot="header" condenses reveals effects="waterfall">
-          <app-toolbar>
+        <app-header slot="header" condenses fixed reveals effects="waterfall">
+          <app-toolbar class="titleBar">
             <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
-            <div main-title>My App</div>
+            <div main-title class="title">Mobile Chkout</div>
           </app-toolbar>
         </app-header>
 
@@ -104,9 +132,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
-          <my-view1 name="view1"></my-view1>
-          <my-view2 name="view2"></my-view2>
+          <my-lists name="lists" route="{{route}}" list={{list}}></my-lists>
+          <my-receipts name="receipts" receipt="{{receipt}}"></my-receipts>
           <my-view3 name="view3"></my-view3>
+          <my-receipt name="receipt" receipt="{{receipt}}"></my-receipt>
+          <my-list name="list" list={{list}}></my-list>
+
           <my-view404 name="view404"></my-view404>
         </iron-pages>
       </app-header-layout>
@@ -154,7 +185,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         // If no page was found in the route data, page will be an empty string.
         // Deault to 'view1' in that case.
-        this.page = page || 'view1';
+        this.page = page || 'lists';
 
         // Close a non-persistent drawer when the page & route are changed.
         if (!this.$.drawer.persistent) {

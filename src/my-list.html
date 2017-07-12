@@ -1,0 +1,118 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../app/bower_components/polymer/polymer-element.html">
+<link rel="import" href="../app/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../app/bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../app/bower_components/paper-input/paper-input.html">
+<link rel="import" href="../app/bower_components/paper-checkbox/paper-checkbox.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-list">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+      paper-checkbox {
+        padding-right: 1rem;
+      }
+    </style>
+    <iron-request id="updateList"></iron-request>
+
+    <h1>List {{listName}}</h1>
+    <template id="shopList" is="dom-repeat" items="{{listItems}}" as="item">
+      <div class="listRow align shadow">
+          <div class="align listItem" on-click="toggleEdit" id$="dialog{{item.count}}">
+            <paper-checkbox></paper-checkbox>
+            <h3 class="itemCount">{{item.label}}</h3><i>({{item.qty}})</i>
+            <div class="spacer"></div>
+          </div>
+      </div>
+    </template>
+    <paper-dialog id='listEdit'>
+    <h4>Edit</h4>
+    <hr />
+    <div class='align editInput'>
+      <paper-input class="editBtn" label="Item name" value="{{editLabel}}" autofocus></paper-input>
+      <paper-input class="editBtn" label="Item qty" value="{{editQty}}"></paper-input>
+    </div>
+    <div class='align'>
+      <paper-button class="update" on-click="save" raised dialog-confirm>Save</paper-button>
+      <paper-button class="update" dialog-dismiss raised>Cancel</paper-button>
+    </div>
+  </paper-dialog>
+  </template>
+
+  <script>
+    class MyList extends Polymer.Element {
+      static get is() { return 'my-list'; }
+      static get properties() {
+        return {
+          list: {
+            observer: 'itemsCheck'
+          },
+          listItems: {
+            type: Array,
+            value: [],
+            reflectToAttribute: true,
+            notify: true
+          }
+        }
+      }
+
+      itemsCheck(newValue) {
+        if (newValue.count) {
+          console.log('you\'ve got items: ', newValue);
+          this.listName = newValue.name;
+          for (var i = 0; i < newValue.count; i++) {
+            this.push('listItems', newValue.items[i]);
+          }
+        }
+      }
+      toggleEdit(e) {
+        if (e.target.localName != "paper-checkbox") {
+          if (e.target.classList[0] == "itemCount" || e.target.localName == "i") {
+            this.editId = e.target.parentElement.id;
+            this.editQty = e.target.parentElement.children[2].innerText.slice(1, -1);
+            if (e.target.localName == "i") {
+              this.editLabel = e.target.previousElementSibling.innerText;
+            } else {
+              this.editLabel = e.target.innerText;
+            }
+          } else {
+            this.editId = e.target.id;
+            this.editLabel = e.target.children[1].innerText;
+            this.editQty = e.target.children[2].innerText.slice(1, -1);
+          }
+          this.$.listEdit.open();
+        }
+      }
+      save() {
+        console.log('editId: ', this.editId);
+        console.log('editLabel', this.editLabel);
+        console.log('qty: ', this.editQty);
+
+        var index = this.editId.substr(this.editId.length - 1);
+
+        this.set(['listItems', index, 'label'], this.editLabel);
+        this.set(['listItems', index, 'qty'], this.editQty);
+
+        // TODO: finish the update bit of Node server....
+        // this.$.updateList.send({url: 'https://mbl-checkout.herokuapp.com/updateList', body: 'params'});
+      }
+    }
+
+    window.customElements.define(MyList.is, MyList);
+
+  </script>
+</dom-module>

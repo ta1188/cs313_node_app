@@ -1,0 +1,138 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../app/bower_components/polymer/polymer-element.html">
+<link rel="import" href="../app/bower_components/paper-button/paper-button.html">
+<link rel="import" href="../app/bower_components/iron-ajax/iron-request.html">
+<link rel="import" href="../app/bower_components/polymer/lib/mixins/gesture-event-listeners.html">
+<link rel="import" href="../../app/bower_components/iron-icons/iron-icons.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-receipts">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+      .fetchBtn {
+        background-color: var(--app-primary-color);
+        color: white;
+      }
+      .labels {
+        padding: 0 1rem;
+      }
+      .labels h4 {
+        margin: 0 0 0.5rem 0;
+      }
+      .labels h4:last-child{
+        margin-right: 2rem;
+      }
+      .listRow {
+        padding: 1rem;
+      }
+    </style>
+    <iron-request id="xhr" response='{{response}}'></iron-request>
+
+    <h1>Receipts</h1>
+    <paper-button class="fetchBtn" raised id="fetchBtn">Fetch Receipts</paper-button>
+    <div class='responseDiv' hidden="{{noData}}">
+      <h4>Your Receipts</h4>
+    </div>
+    <div class="align labels">
+      <h4>Date</h4>
+      <h4>Items</h4>
+      <h4>Total</h4>
+    </div>
+    <template id="fd" is="dom-repeat" items="{{receiptArr}}" as="item">
+      <div class="listRow align shadow" on-click='pullReceipt' id$=[[item.key]]>
+        <span class="itemCount">[[item.date]]</span>
+          <span class="itemCount">[[item.count]]</span>
+        <div class="align">
+          <span class="itemCount">$[[item.total]]</span>
+          <iron-icon icon="chevron-right"></iron-icon>
+        </div>
+      </div>
+    </template>
+  </template>
+
+  <script>
+    class MyReceipts extends Polymer.Element {
+      static get is() { return 'my-receipts'; }
+      static get properties() {
+        return {
+          noData: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+            value: true
+          },
+          receiptArr: {
+            type: Array,
+            notify: true,
+            reflectToAttribute: true,
+            value: []
+          },
+          receiptData: {
+            type: Array,
+            notify: true,
+            value: []
+          },
+          receipt: {
+            type: Object,
+            value: {},
+            notify: true
+          }
+        }
+      }
+      static get observers() {
+        return [
+            'resultsCheck(response)'
+        ]
+      }
+      constructor() {
+        super();
+        this.addEventListener('tap', 'fetchBtn');
+        Polymer.Gestures.addListener(this, 'tap', () => this.fetchLists());
+      }
+      fetchLists() {
+        this.$.xhr.send({url: 'https://mbl-checkout.herokuapp.com/fetchReceipts', body: 'params'});
+        this.noData = false;
+      }
+      resultsCheck(newValue) {
+        if (newValue) {
+          var obj = JSON.parse(newValue);
+          var receiptKeys = Object.keys(obj);
+          for (var i = 0; i < receiptKeys.length; i++) {
+            var receiptItems = obj[receiptKeys[i]];
+            receiptItems.key = receiptKeys[i];
+            var receiptLength = Object.keys(obj[receiptKeys[i]].items).length;
+
+            this.push('receiptArr', {date: obj[receiptKeys[i]].date, count: receiptLength, total: obj[receiptKeys[i]].total, key: receiptKeys[i] });
+
+            this.receiptData.push(receiptItems);
+          }
+        }
+      }
+
+      pullReceipt(e) {
+        var index = this.receiptData.findIndex(x => x.key==e.target.id);
+        this.receipt = this.receiptData[index];
+        console.log(this.receipt);
+
+        this.set('route.path', 'receipt');
+      }
+
+    }
+
+    window.customElements.define(MyReceipts.is, MyReceipts);
+  </script>
+</dom-module>
